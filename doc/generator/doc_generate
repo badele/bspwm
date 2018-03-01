@@ -1,4 +1,8 @@
-#!/bin/bash
+#!/bin/bash -x
+
+# Configuration
+SCALE="70"
+GIFDELAY="240"
 
 EXECDIR=$(dirname $0)
 
@@ -19,7 +23,13 @@ TakeScreenshot() {
     sleep 1
     if [ ! -e "$EXECDIR/screenshot/${TITLE}.png" ]; then
         # Screenshot
-        maim  -u "$EXECDIR/screenshot/${TITLE}.png"
+        if [ $MAXSCALE -eq 100 ]; then
+            maim  -u "$EXECDIR/screenshot/${TITLE}.png"
+        else
+            maim  -u "$EXECDIR/screenshot/${TITLE}_orig.png"
+            convert "$EXECDIR/screenshot/${TITLE}_orig.png" -scale "${MAXSCALE}%" "$EXECDIR/screenshot/${TITLE}.png"
+            rm "$EXECDIR/screenshot/${TITLE}_orig.png"
+        fi
     fi
     dunstify -C $NID
 }
@@ -29,11 +39,11 @@ AddScreenshotToDoc() {
     SECTION="$1"
     TITLE="$2"
     MESS="$3" 
-    SCR=$(ls -1 "$EXECDIR/screenshot/" | tail -n1)
+    SCR=$(find "$EXECDIR/screenshot/" -name *.png -printf "%T@ %p\n" | sort -n | awk '{ print $2}' | tail -n1)
 
     mkdir -p "$EXECDIR/doc/"
     if [ ! -e "$EXECDIR/doc/$SECTION.md" ]; then
-        echo "| Col1  | Col2 | Col3 |" > "$EXECDIR/doc/$SECTION.md"
+        echo "| Description  | Command | Screenshot |" > "$EXECDIR/doc/$SECTION.md"
         echo "| ----- | ---- | ---- |" >> "$EXECDIR/doc/$SECTION.md"
     fi
 
@@ -94,7 +104,7 @@ TakeScreenshot "Launch ncmpcpp terminal"  "$TERMINAL -e sh -c ncmpcpp"
 AddScreenshotToDoc "Window-Node #1" "Window creation(Launch ncmpcpp)" "$TERMINAL -e sh -c ncmpcpp"
 
 bspc node -p north
-TakeScreenshot "North Window preselection"
+TakeScreenshot "North Window preselection" ""
 AddScreenshotToDoc "Window-Node #1" "North Window preselection" "bspc node -p north"
 
 $TERMINAL -e sh -c "screenfetch;read" &
@@ -107,18 +117,18 @@ TakeScreenshot "east Window preselection"  "bspc node -p east"
 AddScreenshotToDoc "Window-Node #2" "east presel"  "bspc node -p east"
 
 $TERMINAL -e sh -c "tty-clock -cs" &
-TakeScreenshot "Launch tty-clock"
+TakeScreenshot "Launch tty-clock" ""
 AddScreenshotToDoc "Window-Node #2" "Launch tty-clock"  "$TERMINAL -e sh -c tty-clock"
 
 for i in 1 2 3 ; do
     bspwm_resize.sh north 50
-    TakeScreenshot "Resize step #$i"
+    TakeScreenshot "Resize step #$i" ""
     AddScreenshotToDoc "Window-Node #2" "Resize step #$i"  "bspwm_resize.sh north 50"
 done
 AddScreenshotToDoc "Window-Node #3" "Initial"  ""
 
 focusmover south
-TakeScreenshot "focusmover south"
+TakeScreenshot "focusmover south" ""
 AddScreenshotToDoc "Window-Node #3" "south windows focus"  "focusmover south"
 
 bspc node -p east -i
@@ -130,6 +140,7 @@ AddScreenshotToDoc "Window-Node #3" "windows ghost presel"  "bspc node -p east -
 #AddNewSection "Windows Creation" "Direction Preselection"
 #TakeScreenshot "super+Return"  "#3 $TERMINAL"
 
-convert -delay 240 -loop 0 $(find "$EXECDIR/screenshot/" -name *.png -printf "%T@ %p\n" | sort -n | awk '{ print $2}' | xargs -r0 echo) "$EXECDIR/screenshot/animated.gif"
+convert -delay ${GIFDELAY} -loop 0 $(find "$EXECDIR/screenshot/" -name *.png -printf "%T@ %p\n" | sort -n | awk '{ print $2}' | xargs -r0 echo) "$EXECDIR/screenshot/animated.gif"
+#convert animated.gif -fuzz 5% -layers Optimize compressed.gif
 
 focusdesktop 3                                                      
