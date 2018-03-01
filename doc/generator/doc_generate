@@ -48,7 +48,7 @@ AddScreenshotToDoc() {
     fi
 
     #cp "$SCR" "$EXECDIR/doc/$SECTION/$TITLE.png"
-    echo "| $TITLE | $MESS | ![$TITLE](../screenshot/$SCR)  |" >> "$EXECDIR/doc/$SECTION.md"
+    echo "| $TITLE | $MESS | ![$TITLE](.$SCR)  |" >> "$EXECDIR/doc/$SECTION.md"
 }
 
 
